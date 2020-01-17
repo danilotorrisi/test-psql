@@ -1,0 +1,54 @@
+Arguments: 
+  /Users/danilotorrisi/.nvm/versions/node/v12.4.0/bin/node /Users/danilotorrisi/.yarn/bin/yarn.js run build
+
+PATH: 
+  /Users/danilotorrisi/.pyenv/shims:/Users/danilotorrisi/.pyenv/shims:/Users/danilotorrisi/.yarn/bin:/Users/danilotorrisi/.config/yarn/global/node_modules/.bin:/Users/danilotorrisi/.nvm/versions/node/v12.4.0/bin:/Users/danilotorrisi/go/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/TeX/texbin:/Users/danilotorrisi/.pyenv/shims:/Users/danilotorrisi/.yarn/bin:/Users/danilotorrisi/.config/yarn/global/node_modules/.bin:/Users/danilotorrisi/.nvm/versions/node/v12.4.0/bin:/Users/danilotorrisi/go/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin
+
+Yarn version: 
+  1.21.1
+
+Node version: 
+  12.4.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  SyntaxError: /Users/danilotorrisi/Desktop/test-psql/package.json: Unexpected token } in JSON at position 186
+      at JSON.parse (<anonymous>)
+      at /Users/danilotorrisi/.yarn/lib/cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (/Users/danilotorrisi/.yarn/lib/cli.js:310:30)
+      at /Users/danilotorrisi/.yarn/lib/cli.js:321:13
+
+npm manifest: 
+  {
+    "name": "test-psql",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "build": "tsc",
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "knex": "^0.20.8",
+      "pg": "^7.17.1",
+      "uuid": "^3.3.3",
+      "yargs": "^15.1.0"
+    },
+    "devDependencies": {
+      "@types/node": "^13.1.7",
+      "@types/yargs": "^15.0.0",
+      "@types/pg": "^7.14.1",
+      "@types/uuid": "^3.4.6"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
