@@ -1,8 +1,10 @@
 # Editor can create a survey with a name.
 
-# Editor can add and remove questions to a survey.
-
 # Editor can publish a survey.
+
+# Editor can create, modify questions.
+
+# Editor can add and remove questions to a survey.
 
 # Editor can create a survey link.
 
@@ -17,15 +19,15 @@
 CREATE_SURVEY ( name: string )
 -> SURVEY_CREATED
 
-ADD_SURVEY_QUESTION ( body: string )
+ADD_SURVEY_QUESTION ( id: string, questionId: string )
 -> SURVEY_QUESTION_ADDED
 -> SURVEY_QUESTION_ALREADY_ADDED
 
+REMOVE_SURVEY_QUESTION ( id: string, questionId: string )
+-> SURVEY_QUESTION_REMOVED
+
 EDIT_SURVEY_QUESTION ( id: string, body: string )
 -> SURVEY_QUESTION_UPDATED
-
-REMOVE_SURVEY_QUESTION ( id: string )
--> SURVEY_QUESTION_REMOVED
 
 PUBLISH_SURVEY ( id: string )
 -> SURVEY_PUBLISHED

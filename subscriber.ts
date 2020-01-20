@@ -40,11 +40,25 @@ function parseJSON(input: string) {
   return data;
 }
 
-export function getStreamQuery(streamName: string): string {
+export function getStreamQuery(
+  streamName: string,
+  params?: {
+    currentPosition?: number;
+    consumerGroupMember?: number;
+    consumerGroupSize?: number;
+  }
+): [string, any[]] {
   const isStream = streamName.indexOf("-") >= 0;
-  return isStream
+  const position = params?.currentPosition ?? 0;
+  const consumerGroupMember = params?.consumerGroupMember ?? 0;
+  const consumerGroupSize = params?.consumerGroupSize ?? 1;
+  const sql = isStream
     ? "SELECT * FROM get_stream_messages($1,$2)"
     : "SELECT * FROM get_category_messages($1,$2,consumer_group_member => $3,consumer_group_size => $4)";
+  const values = isStream
+    ? [streamName, position]
+    : [streamName, position, consumerGroupMember, consumerGroupSize];
+  return [sql, values];
 }
 
 export function createProjector<Projection, Data = {}, Metadata = {}>(
@@ -52,8 +66,8 @@ export function createProjector<Projection, Data = {}, Metadata = {}>(
   initialValue: Projection
 ) {
   async function run(streamName: string, untilGlobalPosition?: number) {
-    const sql = getStreamQuery(streamName);
-    const res = await pool.query(sql, [streamName, 0]);
+    const query = getStreamQuery(streamName);
+    const res = await pool.query(...query);
     return res.rows
       .map(m => decodeMessage(m))
       .filter(
@@ -113,13 +127,12 @@ export function createSubscriber<M>(
 
   const tick = async () => {
     // Run the query.
-    const sql = getStreamQuery(streamName);
-    const res = await pool.query(sql, [
-      streamName,
+    const query = getStreamQuery(streamName, {
       currentPosition,
       consumerGroupMember,
       consumerGroupSize
-    ]);
+    });
+    const res = await pool.query(...query);
 
     await serialPromises(
       res.rows.map(row => {

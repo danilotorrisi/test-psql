@@ -1,7 +1,6 @@
 import { createSubscriber, createProjector } from "../subscriber";
 import { SurveyEvents, QuestionEvents, QuestionUpdated } from "./types";
 
-let fakeSurveyQuestions: any = {};
 let fakeLiveDb: any = {};
 let fakeDirtyDb: any = {};
 
@@ -38,13 +37,6 @@ async function handler(message: SurveyEvents) {
         ]
       };
 
-      const prevSurveyQuestion =
-        fakeSurveyQuestions[message.data.questionId] ?? [];
-      fakeSurveyQuestions[message.data.questionId] = [
-        ...prevSurveyQuestion,
-        message.data.id
-      ];
-
       break;
     case "QUESTION_REMOVED_FROM_SURVEY":
       fakeDirtyDb[id] = {
@@ -52,9 +44,6 @@ async function handler(message: SurveyEvents) {
         questions: prev.questions.filter(q => q.id !== message.data.questionId)
       };
 
-      fakeSurveyQuestions[message.data.questionId] = fakeSurveyQuestions[
-        message.data.questionId
-      ].filter(id => id !== message.data.id);
       break;
     case "SURVEY_PUBLISHED":
       const survey = fakeDirtyDb[id];
@@ -69,44 +58,24 @@ async function handler(message: SurveyEvents) {
         questions
       };
       break;
+    case "SURVEY_QUESTION_UPDATED": {
+      const { id, questionId } = message.data;
+
+      const survey = fakeDirtyDb[id];
+      const questions = await Promise.all(
+        survey.questions.map(question =>
+          question.id === questionId
+            ? projectQuestion(id, message.global_position)
+            : Promise.resolve(question)
+        )
+      );
+      fakeDirtyDb[id] = { ...survey, questions };
+    }
   }
   console.log("SURVEY ======");
   console.log(JSON.stringify(fakeDirtyDb));
   console.log(JSON.stringify(fakeLiveDb));
 }
 
-async function questionHandler(message: QuestionEvents) {
-  console.log(message);
-  const { id, body } = message.data;
-  const surveyIds = fakeSurveyQuestions[id] ?? [];
-  if (message.type === "QUESTION_UPDATED") {
-    await Promise.all(
-      surveyIds.map(async surveyId => {
-        const survey = fakeDirtyDb[surveyId];
-        const questions = await Promise.all(
-          survey.questions.map(question => {
-            if (id === question.id) {
-              return projectQuestion(id);
-            } else {
-              return Promise.resolve(question);
-            }
-          })
-        );
-        fakeDirtyDb[surveyId] = { ...survey, questions };
-      })
-    );
-  }
-
-  console.log("QUESTION ======");
-  console.log(JSON.stringify(fakeDirtyDb));
-  console.log(JSON.stringify(fakeLiveDb));
-}
-
 const surveySubscriber = createSubscriber<SurveyEvents>("survey", handler);
 surveySubscriber.run();
-
-const questionSubscriber = createSubscriber<QuestionEvents>(
-  "question",
-  questionHandler
-);
-questionSubscriber.run();

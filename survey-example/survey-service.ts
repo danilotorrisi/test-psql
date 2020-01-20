@@ -7,7 +7,12 @@ import {
   SurveyCreated,
   QuestionAddedToSurvey,
   SurveyPublished,
-  QuestionRemovedFromSurvey
+  QuestionRemovedFromSurvey,
+  QuestionEvents,
+  SurveyCommands,
+  UpdateSurveyQuestion,
+  SurveyQuestionUpdated,
+  SurveyEvents
 } from "./types";
 import { createPublisher } from "../publisher";
 
@@ -15,11 +20,13 @@ type Messages =
   | CreateSurvey
   | PublishSurvey
   | AddQuestionToSurvey
+  | UpdateSurveyQuestion
   | RemoveQuestionFromSurvey;
 
 type Events =
   | SurveyCreated
   | QuestionAddedToSurvey
+  | SurveyQuestionUpdated
   | QuestionRemovedFromSurvey
   | SurveyPublished;
 
@@ -99,6 +106,17 @@ async function handler(message: Messages) {
         });
       }
       break;
+    case "UPDATE_SURVEY_QUESTION":
+      if (projection != null && projection.lastProcessedAt < message.position) {
+        await publisher.emitEvent({
+          event: "SURVEY_QUESTION_UDPATED",
+          category: "survey",
+          id: message.data.id,
+          data: message.data,
+          metadata: message.metadata
+        });
+      }
+      break;
 
     case "PUBLISH_SURVEY":
       if (publisher != null && projection.lastPublishedAt < message.position) {
@@ -117,3 +135,53 @@ async function handler(message: Messages) {
 
 const subscriber = createSubscriber<Messages>("survey:command", handler);
 subscriber.run();
+
+async function questionHandler(message: QuestionEvents) {
+  const { id } = message.data;
+
+  if (message.type !== "QUESTION_UPDATED") {
+    return;
+  }
+
+  console.log("id", id);
+  const questionListProjector = createProjector(
+    (prev: string[], next: SurveyEvents) => {
+      if (
+        next.type === "QUESTION_ADDED_TO_SURVEY" &&
+        next.data.questionId === id
+      ) {
+        return [...prev, next.data.id];
+      } else if (
+        next.type === "QUESTION_REMOVED_FROM_SURVEY" &&
+        next.data.questionId === id
+      ) {
+        return prev.filter(surveyId => next.data.id !== surveyId);
+      }
+      return prev;
+    },
+    []
+  );
+
+  const surveyIds: string[] = await questionListProjector.run(
+    "survey",
+    message.global_position
+  );
+
+  await Promise.all(
+    surveyIds.map(surveyId =>
+      publisher.sendCommand({
+        command: "UPDATE_SURVEY_QUESTION",
+        category: "survey",
+        id: surveyId,
+        data: { id: surveyId, questionId: id },
+        metadata: message.metadata
+      })
+    )
+  );
+}
+
+const questionSubscriber = createSubscriber<QuestionEvents>(
+  "question",
+  questionHandler
+);
+questionSubscriber.run();

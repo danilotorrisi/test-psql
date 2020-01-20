@@ -15,17 +15,27 @@ export type ISurveyQuestion = { questionId: string; id: string };
 
 // Ctx Survey.
 export type CreateSurvey = Message<"CREATE_SURVEY", ISurvey>;
+export type UpdateSurveyQuestion = Message<
+  "UPDATE_SURVEY_QUESTION",
+  ISurveyQuestion
+>;
 export type SurveyCreated = Message<"SURVEY_CREATED", ISurvey>;
 export type PublishSurvey = Message<"PUBLISH_SURVEY", { id: string }>;
 export type SurveyPublished = Message<"SURVEY_PUBLISHED", { id: string }>;
+export type SurveyQuestionUpdated = Message<
+  "SURVEY_QUESTION_UPDATED",
+  ISurveyQuestion
+>;
 export type SurveyCommands =
   | CreateSurvey
   | PublishSurvey
   | AddQuestionToSurvey
+  | UpdateSurveyQuestion
   | RemoveQuestionFromSurvey;
 export type SurveyEvents =
   | SurveyCreated
   | SurveyPublished
+  | SurveyQuestionUpdated
   | QuestionRemovedFromSurvey
   | QuestionAddedToSurvey;
 
